@@ -40,6 +40,7 @@ def admin_page(secret):
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f2f2f2; }
         </style>
+        <link rel="icon" href="admin-favicon.png" type="image/png">
     </head>
     <body>
         <h1>Списък с гласували (общо: {{ count }})</h1>
