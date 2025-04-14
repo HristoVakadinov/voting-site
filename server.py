@@ -29,7 +29,39 @@ def admin_page(secret):
     voters = list(db.votes.find({}, {"_id": 0, "username": 1, "language": 1, "timestamp": 1}))
     
     
-    return render_template_string(voters=voters, count=len(voters))
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Административен панел</title>
+        <style>
+            body { font-family: Arial; padding: 20px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+        </style>
+    </head>
+    <body>
+        <h1>Списък с гласували (общо: {{ count }})</h1>
+        <table>
+            <tr>
+                <th>Потребител</th>
+                <th>Език</th>
+                <th>Дата/час</th>
+            </tr>
+            {% for voter in voters %}
+            <tr>
+                <td>{{ voter.username }}</td>
+                <td>{{ voter.language }}</td>
+                <td>{{ voter.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+    
+    return render_template_string(html_template, voters=voters, count=len(voters))
 
 LANGUAGES = ["Python", "C", "C++", "C#", "Java"]
 
