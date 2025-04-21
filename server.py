@@ -26,8 +26,18 @@ def admin_page(secret):
     if secret != ADMIN_SECRET:
         return "Невалиден административен ключ", 403
     
-    voters = list(db.votes.find({}, {"_id": 0, "username": 1, "language": 1, "timestamp": 1}))
+
+    sort_by = request.args.get('sort_by', 'timestamp')
+    sort_order = int(request.args.get('sort_order', -1)) 
     
+
+    valid_sort_columns = ['username', 'language', 'timestamp']
+    if sort_by not in valid_sort_columns:
+        sort_by = 'timestamp'
+    
+
+    voters = list(db.votes.find({}, {"_id": 0, "username": 1, "language": 1, "timestamp": 1})
+                 .sort([(sort_by, sort_order)]))
     
     html_template = """
     <!DOCTYPE html>
@@ -38,17 +48,30 @@ def admin_page(secret):
             body { font-family: Arial; padding: 20px; }
             table { border-collapse: collapse; width: 100%; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
+            th { background-color: #f2f2f2; cursor: pointer; }
+            th:hover { background-color: #e6e6e6; }
+            .sort-arrow { margin-left: 5px; }
         </style>
-        <link rel="icon" href="admin-favicon.png" type="image/png">
     </head>
     <body>
         <h1>Списък с гласували (общо: {{ count }})</h1>
         <table>
             <tr>
-                <th>Потребител</th>
-                <th>Език</th>
-                <th>Дата/час</th>
+                <th onclick="sortTable('username')">Потребител 
+                    {% if sort_by == 'username' %}
+                        {% if sort_order == -1 %}↓{% else %}↑{% endif %}
+                    {% endif %}
+                </th>
+                <th onclick="sortTable('language')">Език
+                    {% if sort_by == 'language' %}
+                        {% if sort_order == -1 %}↓{% else %}↑{% endif %}
+                    {% endif %}
+                </th>
+                <th onclick="sortTable('timestamp')">Дата/час
+                    {% if sort_by == 'timestamp' %}
+                        {% if sort_order == -1 %}↓{% else %}↑{% endif %}
+                    {% endif %}
+                </th>
             </tr>
             {% for voter in voters %}
             <tr>
@@ -58,11 +81,28 @@ def admin_page(secret):
             </tr>
             {% endfor %}
         </table>
+        
+        <script>
+            function sortTable(column) {
+                const urlParams = new URLSearchParams(window.location.search);
+                let sortOrder = -1;
+                
+                if (urlParams.get('sort_by') === column) {
+                    sortOrder = parseInt(urlParams.get('sort_order')) * -1;
+                }
+                
+                urlParams.set('sort_by', column);
+                urlParams.set('sort_order', sortOrder);
+                window.location.search = urlParams.toString();
+            }
+        </script>
     </body>
     </html>
     """
     
-    return render_template_string(html_template, voters=voters, count=len(voters))
+    return render_template_string(html_template, voters=voters, count=len(voters),
+                                sort_by=sort_by, sort_order=sort_order)
+
 
 LANGUAGES = ["Python", "C", "C++", "C#", "Java"]
 
